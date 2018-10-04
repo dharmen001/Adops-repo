@@ -20,8 +20,8 @@ class Config(object):
                 section_key.append(str(each_key))
                 section_value.append(str(each_val))
 
-        print(section_key)
-        print(section_value)
+        self.section_key = section_key
+        self.section_value = section_value
 
 
 if __name__ == '__main__':
