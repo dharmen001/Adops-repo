@@ -9,11 +9,12 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn import metrics
+import matplotlib.pyplot as plt
 
 
 class TestAdModel(object):
 
-    def __init__(self):
+    def __init__(self, training_input, test_input):
         self.readFile = None
         self.x_train = None
         self.y_train = None
@@ -21,9 +22,13 @@ class TestAdModel(object):
         self.y_test = None
         self.model_random_predict = None
         self.test_data = None
+        self.readFile_views = None
+        self.readFile_adViews = None
+        self.training_input = training_input
+        self.test_input = test_input
 
     def read_train(self):
-        readfile = pd.read_csv('ad_org_train.csv')
+        readfile = pd.read_csv(self.training_input)
         readfile['videoID'] = readfile['vidid'].str.extract('(\d+)').astype(int)
 
         # Filtering the Strings from Int
@@ -38,10 +43,12 @@ class TestAdModel(object):
         readfile['dislikes'] = readfile.dislikes.astype(float)
         readfile['comment'] = readfile.comment.astype(float)
 
-        self.readFile = readfile
+        # self.readFile_views = readfile[['views']]
+        # self.readFile_adViews = readfile[['adview']]
+        self.readFile = readfile.loc[:, :]
 
     def read_test(self):
-        read_test = pd.read_csv('ad_org_test.csv')
+        read_test = pd.read_csv(self.test_input)
         read_test['videoID'] = read_test['vidid'].str.extract('(\d+)').astype(int)
 
         read_test = read_test[read_test.views.str.contains('F') == False]
@@ -54,13 +61,22 @@ class TestAdModel(object):
         read_test['dislikes'] = read_test.dislikes.astype(float)
         read_test['comment'] = read_test.comment.astype(float)
 
-        self.test_data = read_test['views']
+        self.test_data = read_test.loc[:, :]
 
+    def plot_data(self):
+        plt.xlabel('Views')
+        plt.ylabel('adView')
+        # plt.scatter(self.readFile['views'], self.readFile['adview'], marker='+')
+
+        plt.scatter(self.readFile_views, self.readFile_adViews, marker='+')
+
+        plt.show()
+        # plt.savefig('AdViews')
 
     # Preparing X and Y
     def train_split(self):
         # x_data = self.readFile[['views', 'likes', 'dislikes', 'comment']]
-        x_data = self.readFile.iloc[:, 2:5]
+        x_data = self.readFile.iloc[:, 2]
         # y_data = self.readFile[['adview']]
         y_data = self.readFile.iloc[:, 1]
 
@@ -77,11 +93,16 @@ class TestAdModel(object):
     # linear Model
     def linear_model_prep(self):
         model_linear = LinearRegression()
-        model_linear.fit(self.x_train, self.y_train)
-        model_linear_predict = model_linear.predict(self.x_test)
+        # model_linear.fit(self.x_train, self.y_train)
+        model_linear.fit(self.readFile[['views']], self.readFile.adview)
+        # model_linear_predict_train = model_linear.predict(self.x_test)
+        model_linear_predict_test = model_linear.predict(self.test_data)
+        # print(model_linear_predict_train)
+        print (model_linear_predict_test)
+        # print(model_linear.score(self.x_test, self.y_test))
 
-        print(model_linear_predict)
-        print(model_linear.score(self.x_test, self.y_test))
+        self.test_data['adViews'] = model_linear_predict_test
+        print(self.test_data)
 
     # Regression  Model
     def random_forest_prep(self):
@@ -107,17 +128,18 @@ class TestAdModel(object):
 
     def main(self):
         self.read_train()
-        # self.read_test()
-        self.train_split()
-        self.scale_data()
+        self.read_test()
+        self.plot_data()
+        # self.train_split()
+        # self.scale_data()
         self.linear_model_prep()
-        self.random_forest_prep()
-        self.evaluate_random_forest()
-        self.k_neighbour_prep()
+        # self.random_forest_prep()
+        # self.evaluate_random_forest()
+        # self.k_neighbour_prep()
 
 
 if __name__ == "__main__":
-    object_train = TestAdModel()
+    object_train = TestAdModel('ad_org_train.csv', 'ad_org_test.csv')
     object_train.main()
 
 
